@@ -3,31 +3,72 @@ const router = express.Router();
 const User = require('../models/User');
 const mongoose = require('mongoose'); // 👈 Esta línea faltaba
 
-
-// Obtener todos los usuarios
+// Obtener todos los trabajadores con sus imágenes
 router.get('/', async (req, res) => {
   try {
-    const users = await User.find({}).populate('roles_id').populate('puesto_id'); // 👈 Poblar roles_id y puesto_id
-    res.json(users);
+    const trabajadores = await User.find({})
+      .select('nombre apellido image_url puesto_id roles_id')
+      .populate('puesto_id', 'nombre')
+      .populate('roles_id', 'nombre_rol');
+    
+    // Formatear la respuesta incluyendo la URL completa de la imagen
+    const trabajadoresFormateados = trabajadores.map(trabajador => {
+      let imageUrl = null;
+      
+      // Construir URL completa si existe image_url
+      if (trabajador.image_url) {
+        // Asegúrate de que la URL sea accesible desde el cliente
+        imageUrl = trabajador.image_url.startsWith('http') 
+          ? trabajador.image_url 
+          : `${req.protocol}://${req.get('host')}/${trabajador.image_url}`;
+      }
+
+      return {
+        _id: trabajador._id,
+        nombre: trabajador.nombre,
+        apellido: trabajador.apellido,
+        image_url: imageUrl, // URL completa
+        puesto: trabajador.puesto_id?.nombre || 'Sin puesto',
+        rol: trabajador.roles_id?.nombre_rol || 'Sin rol'
+      };
+    });
+
+    res.json(trabajadoresFormateados);
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener usuarios' });
+    console.error('Error al obtener los trabajadores:', error);
+    res.status(500).json({ error: 'Error al obtener los trabajadores' });
   }
 });
+
+module.exports = router;
 
 // Obtener un usuario por ID
 router.get('/:id', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).populate('roles_id').populate('puesto_id'); // 👈 Poblar roles_id y puesto_id
+    const user = await User.findById(req.params.id)
+      .populate('roles_id')
+      .populate('puesto_id')
+      .select('nombre apellido puesto_id roles_id image_url');
+    
     if (!user) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
-    res.json(user);
+    
+    res.json({
+      _id: user._id,
+      nombre: user.nombre,
+      apellido: user.apellido,
+      puesto: user.puesto_id?.nombre || 'Sin puesto',
+      image_url: user.image_url || null,
+      roles_id: user.roles_id
+    });
   } catch (error) {
     console.error('Error al obtener el usuario:', error);
     res.status(500).json({ error: 'Error al obtener el usuario' });
   }
 });
 
+module.exports = router;
 // Actualizar el puesto de un usuario
 router.put('/:id/update-puesto', async (req, res) => {
   const { id } = req.params;

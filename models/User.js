@@ -7,6 +7,7 @@ const UserSchema = new mongoose.Schema({
   telefono: { type: String, required: true },
   fecha_registro: { type: Date, default: Date.now },
   password: { type: String, required: true },
+  image_url: { type: String }, // 👈 Campo para la URL de la imagen
   roles_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Role',

@@ -2,7 +2,51 @@ const express = require('express');
 const router = express.Router();
 const Horario = require('../models/Horario');
 // Usar PUT para actualizar o crear horarios
+router.post('/sincronizar-horarios', async (req, res) => {
+  try {
+    // 1. Obtener el horario más reciente
+    const ultimoHorario = await Horario.findOne().sort({ fecha: -1 });
+    
+    if (!ultimoHorario) {
+      return res.status(404).json({ error: 'No hay horarios registrados' });
+    }
 
+    // 2. Obtener todos los usuarios
+    const usuarios = await User.find({});
+    
+    // 3. Para cada usuario, verificar si tiene horario y asignarle el último si no lo tiene
+    let usuariosActualizados = 0;
+    
+    for (const usuario of usuarios) {
+      const tieneHorario = await Horario.exists({ usuario_id: usuario._id });
+      
+      if (!tieneHorario) {
+        await Horario.create({
+          usuario_id: usuario._id,
+          fecha: ultimoHorario.fecha,
+          entrada: ultimoHorario.entrada,
+          salida: ultimoHorario.salida,
+          bono_minutos: ultimoHorario.bono_minutos,
+          bono_monto: ultimoHorario.bono_monto
+        });
+        usuariosActualizados++;
+      }
+    }
+
+    res.json({
+      message: `Horarios sincronizados. ${usuariosActualizados} usuarios actualizados.`,
+      horarioBase: {
+        fecha: ultimoHorario.fecha,
+        entrada: ultimoHorario.entrada,
+        salida: ultimoHorario.salida
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error al sincronizar horarios:', error);
+    res.status(500).json({ error: 'Error al sincronizar horarios' });
+  }
+});
 // Obtener horarios por usuario y fecha
 router.get('/', async (req, res) => {
   try {
