@@ -1,3 +1,4 @@
+// models/Horario.js
 const mongoose = require('mongoose');
 
 const HorarioSchema = new mongoose.Schema({
@@ -7,7 +8,7 @@ const HorarioSchema = new mongoose.Schema({
     required: true,
   },
   fecha: {
-    type: Date,
+    type: Date,  // Cambiado de Date a String
     required: true,
   },
   entrada: {
@@ -20,12 +21,12 @@ const HorarioSchema = new mongoose.Schema({
   },
   bono_minutos: {
     type: String,
-    required: true,
+    required: false,  // Cambiado a no requerido
   },
   bono_monto: {
     type: String,
-    required: true,
+    required: false,  // Cambiado a no requerido
   },
-});
+}, { collection: 'horarios' });
 
-module.exports = mongoose.model('Horario', HorarioSchema, 'horarios');
+module.exports = mongoose.model('Horario', HorarioSchema);

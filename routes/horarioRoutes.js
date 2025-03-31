@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose'); // ¡Esta línea faltaba!
 const Horario = require('../models/Horario');
 // Usar PUT para actualizar o crear horarios
 router.post('/sincronizar-horarios', async (req, res) => {
@@ -100,6 +101,7 @@ router.get('/', async (req, res) => {
     });
   }
 });
+
 router.put('/guardar-horarios', async (req, res) => {
   try {
     const { usuarios, horarios } = req.body;
